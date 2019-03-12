@@ -5,8 +5,10 @@
   "dependencies": {
     "@fortawesome/react-fontawesome": "^0.1.4",
     "@octokit/rest": "^16.17.0",
+    "express": "^4.16.4",
     "i": "^0.3.6",
     "npm": "^6.9.0",
+    "npm-run-all": "^4.1.5",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
     "react-fontawesome": "^1.6.1",
@@ -15,7 +17,9 @@
     "universal-cookie": "^3.0.7"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "npx npm-run-all --parallel react gatekeeper",
+    "react": "react-scripts start",
+    "gatekeeper": "node gatekeeper/index.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

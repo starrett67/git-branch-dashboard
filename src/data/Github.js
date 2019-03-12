@@ -14,13 +14,20 @@ export default class GithubData {
     })
   }
 
-  async getRepos (org, topics) {
+  async getFilteredRepos (org, topics) {
+    const repos = await this.getRepos(org)
+    const topicPromises = repos.map(this.getTopics)
+    await Promise.all(topicPromises)
+    return repos.filter(r => containsTopic(r, topics))
+  }
+
+  async getRepos (org) {
     const repos = await this.octokit.repos.listForOrg({ org: org, per_page: 1000 })
-    if (topics) return repos.data.filter(r => containsTopic(r, topics))
-    else return repos.data
+    return repos.data
   }
 
   async getTopics (repo) {
-    this.octokit.repos.listTopics({ owner: org })
+    const topics = await this.octokit.repos.listTopics({ owner: repo.owner })
+    Object.assign(repo, topics.data)
   }
 }

@@ -2,7 +2,7 @@ import Octokit from '@octokit/rest'
 
 const containsTopic = (repo, topics) => {
   let containsTopic = true
-  if (!repo.topics || topics.find(!repo.topics.includes)) containsTopic = false
+  if (!Array.isArray(repo.topics) || topics.find(t => !repo.topics.includes(t))) containsTopic = false
   return containsTopic
 }
 
@@ -14,20 +14,31 @@ export default class GithubData {
     })
   }
 
-  async getFilteredRepos (org, topics) {
-    const repos = await this.getRepos(org)
-    const topicPromises = repos.map(this.getTopics)
+  async getFilteredRepos (org, topics, branches) {
+    let repos = await this.getRepos(org)
+    const topicPromises = repos.map(r => this.getTopics(r))
     await Promise.all(topicPromises)
-    return repos.filter(r => containsTopic(r, topics))
+    repos = repos.filter(r => containsTopic(r, topics))
+    const branchPromises = repos.map(r => this.getBranches(r))
+    await Promise.all(branchPromises)
+    console.log(repos)
+    return repos
   }
 
   async getRepos (org) {
     const repos = await this.octokit.repos.listForOrg({ org: org, per_page: 1000 })
-    return repos.data
+    return repos.data.map(d => d)
   }
-
+  async getBranches (repo) {
+    const branches = await this.octokit.repos.listBranches({ repo: repo.name, owner: repo.owner.login })
+    repo.branches = branches.data
+  }
   async getTopics (repo) {
-    const topics = await this.octokit.repos.listTopics({ owner: repo.owner })
-    Object.assign(repo, topics.data)
+    const topics = await this.octokit.repos.listTopics({
+      repo: repo.name,
+      owner: repo.owner.login,
+      headers: { accept: 'application/vnd.github.mercy-preview+json' }
+    })
+    repo.topics = topics.data.names
   }
 }

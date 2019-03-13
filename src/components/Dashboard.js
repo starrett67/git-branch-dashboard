@@ -7,7 +7,7 @@ class Dashboard extends Component {
     this.state = {
       data: new GithubData(props.token),
       org: 'RoomstoGoDigital',
-      topics: ['lambda'],
+      topics: ['lambda-edge'],
       user: props.user,
       repos: []
     }
@@ -30,7 +30,7 @@ class Dashboard extends Component {
 
   async getRepos () {
     const { data, topics, org } = this.state
-    const repos = await data.getRepos(org, topics)
+    const repos = await data.getFilteredRepos(org, topics)
     return repos
   }
 

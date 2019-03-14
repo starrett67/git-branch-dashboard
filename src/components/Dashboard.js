@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import GithubData from '../data/Github'
+import { HashLoader } from 'react-spinners'
 
 class Dashboard extends Component {
   constructor (props) {
@@ -7,7 +8,7 @@ class Dashboard extends Component {
     this.state = {
       data: new GithubData(props.token),
       org: 'RoomstoGoDigital',
-      topics: ['lambda-edge'],
+      topics: ['roomstogo'],
       user: props.user,
       repos: [],
       branches: ['master', 'staging', 'production']
@@ -38,9 +39,12 @@ class Dashboard extends Component {
   render () {
     let page = (
       <div>
-        <p>
-                    Loading Repositories...
-        </p>
+        <HashLoader
+          sizeUnit={'px'}
+          size={180}
+          color={'#6e5494'}
+          loading={(this.state.repos.length < 1)}
+        />
       </div>
     )
     if (this.state.repos.length > 1) {

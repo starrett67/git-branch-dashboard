@@ -9,7 +9,8 @@ class Dashboard extends Component {
       org: 'RoomstoGoDigital',
       topics: ['lambda-edge'],
       user: props.user,
-      repos: []
+      repos: [],
+      branches: ['master', 'staging', 'production']
     }
   }
 
@@ -24,13 +25,13 @@ class Dashboard extends Component {
   }
 
   renderRepo (r) {
-    const html = (<p>{r.full_name}</p>)
+    const html = (<p key={r.name}>{r.full_name}</p>)
     return html
   }
 
   async getRepos () {
-    const { data, topics, org } = this.state
-    const repos = await data.getFilteredRepos(org, topics)
+    const { data, topics, org, branches } = this.state
+    const repos = await data.getFilteredRepos(org, topics, branches)
     return repos
   }
 

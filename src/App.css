@@ -3,6 +3,11 @@ body {
   background: #F2F2F2;
 }
 
+* {
+  box-sizing: border-box;
+}
+
+
 /* General Animations */
 .fadein-slow {
   animation: fadein 4s;
@@ -28,15 +33,6 @@ body {
   align-items: center;
 }
 
-.container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  justify-content: space-around;
-  height: 87vh;
-  width: 90vw;  
-}
-
 @media screen and (max-width: 900px) {
   .container {
     flex-wrap: wrap
@@ -49,6 +45,19 @@ body {
     flex-wrap: nowrap;
     height: 200vh;
   }
+}
+
+.row {
+  border-bottom-style: solid;
+  border-color: #6762a6;
+  padding-top: 15px;
+}
+
+.dashboard {
+  padding-left: 15px;
+  padding-right: 15px;
+  border-style: solid;
+  border-color: #6762a6
 }
 
 /* card */
@@ -93,38 +102,6 @@ h4 {
   font-size: 1.2em;
   margin: 15px;
   color: #757575;
-}
-
-/* Loading Icon */
-.loading-wrapper, .loading {
-  display: flex;
-  align-items: center;
-  justify-content: center; 
-  flex-direction: column;
-}
-
-.loading {
-  width: 200px;
-  height: 200px;
-}
-
-.loading .background {
-  border-radius: 50%;
-  background: #6762a6;
-  border: 3px solid #c9c3e6;
-  box-shadow: 1px 2px 2px rgba(0, 0, 0, 0.25);
-  width: 200px;  
-  height: 200px;
-  box-sizing: border-box;
-  animation: pulse-colors 2s infinite alternate linear;
-}
-
-.loading i {
-  margin: 25px 5px 5px 55px;
-  float: left;
-  font-size: 10em !important;
-  color: #fff;
-  animation: pulse-icon 2s infinite alternate linear;
 }
 
 @keyframes pulse-icon {
@@ -203,36 +180,6 @@ button:hover span {
   transform: rotate(-1.1deg)
 }
 
-/* Twitter */
-button.twitter {
-  border: 3px solid #ffffff;
-  background: #433e90
-}
-
-button.twitter:hover {
-  background: #326ada;
-}
-
-/* Google */
-button.google {
-  border: 3px solid #ffffff;
-  background: #0057e7;
-}
-
-button.google:hover {
-  background: #008744;
-}
-
-/* Facebook */
-button.facebook {
-  border: 3px solid #ffffff;
-  background: #8b9dc3;
-}
-
-button.facebook:hover {
-  background: #3b5998;
-}
-
 /* Github */
 button.github {
   border: 3px solid #ffffff;
@@ -248,49 +195,4 @@ footer {
   display: flex;
   justify-content: space-between;
   width: 87vw;
-}
-
-footer a {
-  color: #fff;
-}
-
-footer span {
-  font-size: 3em !important;
-  text-shadow: 0px 2px 2px rgba(0, 0, 0, 0.25);
-  transition: .3s;
-  padding-top: 3px;
-}
-
-footer span:hover {
-  cursor: pointer;
-  text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-}
-
-footer .small-button {
-  border-radius: 50%;
-  border: 1px solid #fff;
-  width: 55px;
-  height: 55px;
-  transition: .3s;
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-  text-align: center;
-}
-
-footer .small-button:hover {
-  background: #767676;
-  box-shadow: 0px 6px 6px rgba(0, 0, 0, 0.45);
-}
-
-footer .small-button.github {
-  background: #6e5494;
-}
-
-footer .small-button.medium {
-  background: #00ab6c;
-  font-size: 0.85em;
-}
-
-footer .small-button.medium span {
-  position: relative;
-  top: 4px;
 }

@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import GithubData from '../data/Github'
 import { HashLoader } from 'react-spinners'
+import RepoRow from './RepoRow'
 
 class Dashboard extends Component {
   constructor (props) {
@@ -15,6 +16,12 @@ class Dashboard extends Component {
     }
   }
 
+  async getRepos () {
+    const { data, topics, org, branches } = this.state
+    const repos = await data.getFilteredRepos(org, topics, branches)
+    return repos
+  }
+
   componentWillMount () {
     this._asyncRequest = this.getRepos().then(r => this.setState({ repos: r }))
   }
@@ -25,15 +32,15 @@ class Dashboard extends Component {
     }
   }
 
-  renderRepo (r) {
-    const html = (<p key={r.name}>{r.full_name}</p>)
-    return html
+  rederBranch (b) {
+
   }
 
-  async getRepos () {
-    const { data, topics, org, branches } = this.state
-    const repos = await data.getFilteredRepos(org, topics, branches)
-    return repos
+  renderRepo (r) {
+    const html = (
+      <RepoRow key={r.name} repo={r} />
+    )
+    return html
   }
 
   render () {
@@ -49,7 +56,7 @@ class Dashboard extends Component {
     )
     if (this.state.repos.length > 1) {
       page = (
-        <div>
+        <div className='dashboard'>
           {this.state.repos.map(this.renderRepo)}
         </div>
       )

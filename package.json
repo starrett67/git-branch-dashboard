@@ -24,7 +24,7 @@
   "scripts": {
     "start": "npx npm-run-all --parallel react gatekeeper",
     "start:prod": "npx npm-run-all --parallel prod gatekeeper",
-    "prod": "npm run build && npx serve -s build",
+    "prod": "npm run build && npx serve -l 3000 -s build",
     "react": "react-scripts start",
     "gatekeeper": "node gatekeeper/index.js",
     "build": "react-scripts build",

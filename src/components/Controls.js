@@ -6,7 +6,7 @@ class Controls extends Component {
   render () {
     return (
       <MDBRow className='controls'>
-        <MDBCol size='2'>
+        <MDBCol size='3'>
           <MDBDropdown label='Organization'>
             <label>Org:</label>
             <MDBDropdownToggle caret color='primary'>

@@ -2,26 +2,13 @@ import Octokit from '@octokit/rest'
 
 const containsTopic = (repo, topics) => {
   let containsTopic = true
+  console.log(`filtering topics: ${topics}`)
   if (!Array.isArray(repo.topics) || topics.find(t => !repo.topics.includes(t))) containsTopic = false
   return containsTopic
 }
 
 const filterBranches = (repo, branches) => {
   repo.branches = branches.map(b => repo.branches.find(branch => branch.name === b))
-}
-
-const arrangeBranches = (repo, branches) => {
-  for (let branch of branches) {
-    const matchingBranch = repo.branches.find(b => { if (b && b.name === branch) return true })
-    if (matchingBranch) {
-      repo[branch] = `Last Commit: ${new Date(matchingBranch.commit.author.date).toLocaleString()}`
-      repo[`${branch}_commit_url`] = matchingBranch.commit.url
-      repo[`${branch}_commit_message`] = matchingBranch.commit.message
-      repo[`${branch}_commit_author`] = matchingBranch.commit.author.name
-    } else {
-      repo[branch] = `Branch Doesn't Exist`
-    }
-  }
 }
 
 export default class GithubData {
@@ -40,7 +27,6 @@ export default class GithubData {
     await this.getAllBranches(repos)
     repos.forEach(r => filterBranches(r, branches))
     await this.getAllBranchesCommits(repos)
-    repos.forEach(r => arrangeBranches(r, branches))
     console.log(repos)
     console.log(`All Done! And to think it only took ${this.apiCalls} to get all the data. Thats cheap!`)
     return repos
@@ -93,6 +79,34 @@ export default class GithubData {
       const response = await this.octokit.repos.getCommit({ repo: repo.name, owner: repo.owner.login, sha: branch.commit.sha })
       this.apiCalls++
       return Object.assign(branch.commit, response.data.commit)
+    }
+  }
+
+  async getPullRequest (repo, src, dest) {
+    const pr = await this.octokit.pulls.list({
+      repo: repo.name,
+      owner: repo.owner.login,
+      title: src.commit.message,
+      head: src.name,
+      base: dest.name,
+      state: 'open'
+    })
+    return pr.data[0]
+  }
+
+  async createPullRequest (repo, src, dest) {
+    try {
+      const pr = await this.octokit.pulls.create({
+        repo: repo.name,
+        owner: repo.owner.login,
+        title: src.commit.message,
+        head: src.name,
+        base: dest.name
+      })
+      console.log(pr)
+      return pr.data
+    } catch (err) {
+      return this.getPullRequest(repo, src, dest)
     }
   }
 }

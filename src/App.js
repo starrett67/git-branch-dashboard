@@ -1,7 +1,9 @@
 import React, { Component } from 'react'
 import Github from './components/Github'
 import Dashboard from './components/Dashboard'
+import Header from './components/Header'
 import Cookies from 'universal-cookie'
+import { MDBContainer, MDBRow, MDBCol } from 'mdbreact'
 
 import './App.css'
 
@@ -33,11 +35,18 @@ class App extends Component {
 
   render () {
     return (
-      <div className='wrapper'>
-        <div className='container'>
-          {this.renderLogin()}
-        </div>
-      </div>
+      <MDBContainer fluid>
+        <MDBRow>
+          <MDBCol>
+            <Header />
+          </MDBCol>
+        </MDBRow>
+        <MDBRow className='mt-1'>
+          <MDBCol className='text-center'>
+            {this.renderLogin()}
+          </MDBCol>
+        </MDBRow>
+      </MDBContainer>
     )
   }
 }

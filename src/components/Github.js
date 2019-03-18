@@ -14,7 +14,7 @@ class Github extends Component {
           provider='github'
           gatekeeper='http://localhost:9999'
           appId='fe376802e84328ca5784'
-          redirect={callback}
+          redirect='http://branch-dashboard.rtg-shared.com/'
           scope={['repo']}
           onLoginSuccess={this.props.onSuccess}
           onLoginFailure={this.props.onFailure}

@@ -2,59 +2,65 @@ import Octokit from '@octokit/rest'
 
 const containsTopic = (repo, topics) => {
   let containsTopic = true
-  console.log(`filtering topics: ${topics}`)
   if (!Array.isArray(repo.topics) || topics.find(t => !repo.topics.includes(t))) containsTopic = false
   return containsTopic
 }
 
-const filterBranches = (repo, branches) => {
-  repo.branches = branches.map(b => repo.branches.find(branch => branch.name === b))
-}
-
 export default class GithubData {
   constructor (token) {
-    console.log(token)
+    this.repos = []
     this.octokit = new Octokit({
       auth: `Bearer ${token}`
     })
   }
 
+  resetRepos () {
+    this.repos = []
+  }
+
+  async getOrganizations () {
+    let orgs = await this.octokit.orgs.listForAuthenticatedUser()
+    console.log(`Orgs: ${JSON.stringify(orgs.data, null, 2)}`)
+    return orgs.data.map(o => o.login)
+  }
+
   async getFilteredRepos (org, topics, branches) {
     this.apiCalls = 0
-    let repos = await this.getRepos(org)
-    await this.getAllTopics(repos)
-    repos = repos.filter(r => containsTopic(r, topics))
-    await this.getAllBranches(repos)
-    repos.forEach(r => filterBranches(r, branches))
-    await this.getAllBranchesCommits(repos)
-    console.log(repos)
-    console.log(`All Done! And to think it only took ${this.apiCalls} to get all the data. Thats cheap!`)
-    return repos
+    console.log(`Staring to search Github for data... 404s are expected for missing branches.`)
+    await this.getRepos(org)
+    await this.getAllTopics()
+    const filteredRepos = this.repos.filter(r => containsTopic(r, topics))
+    await this.getReposBranches(filteredRepos, branches)
+    await this.getAllBranchesCommits(filteredRepos)
+    console.log(`Total Calls: ${this.apiCalls}`)
+    return filteredRepos
   }
 
   async getRepos (org) {
-    const repos = await this.octokit.repos.listForOrg({ org: org, per_page: 1000 })
-    this.apiCalls++
-    return repos.data.map(d => d)
+    if (!this.repos.length > 0) {
+      console.log('Getting Repos!')
+      const repos = await this.octokit.repos.listForOrg({ org: org, per_page: 1000 })
+      this.apiCalls++
+      repos.data.forEach(r => {
+        if (!r.archived) {
+          this.repos.push(r)
+        }
+      })
+    }
+    return this.repos
   }
-
-  getAllBranches (repos) {
-    const branchPromises = repos.map(r => this.getBranches(r))
-    return Promise.all(branchPromises)
-  }
-
-  async getBranches (repo) {
-    const branches = await this.octokit.repos.listBranches({ repo: repo.name, owner: repo.owner.login })
-    this.apiCalls++
-    repo.branches = branches.data
-  }
-
-  getAllTopics (repos) {
-    const topicPromises = repos.map(r => this.getTopics(r))
+  getAllTopics () {
+    const topicPromises = this.repos.map(r => {
+      if (!r.topics) {
+        return this.getTopics(r)
+      }
+      return Promise.resolve(r.topics)
+    })
     return Promise.all(topicPromises)
   }
 
   async getTopics (repo) {
+    console.log('Getting Topics!')
     const topics = await this.octokit.repos.listTopics({
       repo: repo.name,
       owner: repo.owner.login,
@@ -64,18 +70,53 @@ export default class GithubData {
     repo.topics = topics.data.names
   }
 
+  getReposBranches (repos, branches) {
+    const branchPromises = repos.map(r => this.getRepoBranches(r, branches))
+    return Promise.all(branchPromises)
+  }
+
+  async getRepoBranches (repo, branches) {
+    if (!repo.branches || !Array.isArray(repo.branches)) {
+      repo.branches = []
+    }
+    repo.branches = repo.branches.filter(b => branches.includes(b.name))
+    const promises = branches.map(b => {
+      const matchingBranch = repo.branches.find(branch => branch.name === b)
+      if (!matchingBranch) {
+        return this.getRepoBranch(repo, b)
+      }
+      return Promise.resolve()
+    })
+    return Promise.all(promises)
+  }
+
+  async getRepoBranch (repo, branch) {
+    try {
+      console.log('Getting Branch!')
+      const resp = await this.octokit.repos.getBranch({ repo: repo.name, owner: repo.owner.login, branch: branch })
+      this.apiCalls++
+      repo.branches.push(resp.data)
+    } catch (err) { }
+  }
+
   getAllBranchesCommits (repos) {
     const brachesCommits = repos.map(r => this.getAllCommits(r))
     return Promise.all(brachesCommits)
   }
 
   getAllCommits (repo) {
-    const branchCommits = repo.branches.map(b => this.getCommitData(repo, b))
+    const branchCommits = repo.branches.map(b => {
+      if (b && !b.commit.author) {
+        return this.getCommitData(repo, b)
+      }
+      return Promise.resolve(repo.commit)
+    })
     return Promise.all(branchCommits)
   }
 
   async getCommitData (repo, branch) {
     if (branch) {
+      console.log('Getting Commits!')
       const response = await this.octokit.repos.getCommit({ repo: repo.name, owner: repo.owner.login, sha: branch.commit.sha })
       this.apiCalls++
       return Object.assign(branch.commit, response.data.commit)
@@ -103,7 +144,6 @@ export default class GithubData {
         head: src.name,
         base: dest.name
       })
-      console.log(pr)
       return pr.data
     } catch (err) {
       return this.getPullRequest(repo, src, dest)

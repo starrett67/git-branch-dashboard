@@ -1,15 +1,8 @@
-var url = require('url')
-
-var http = require('http')
-
 var https = require('https')
-
 var fs = require('fs')
-
+var path = require('path')
 var qs = require('querystring')
-
 var express = require('express')
-
 var app = express()
 
 var TRUNCATE_THRESHOLD = 10
@@ -21,7 +14,7 @@ var REPLACEMENT = '***'
 // Load config defaults from JSON file.
 // Environment variables override defaults.
 function loadConfig () {
-  var config = JSON.parse(fs.readFileSync(__dirname + '/config.json', 'utf-8'))
+  var config = JSON.parse(fs.readFileSync(path.join(__dirname, '/config.json'), 'utf-8'))
   log('Configuration')
   for (var i in config) {
     config[i] = process.env[i.toUpperCase()] || config[i]

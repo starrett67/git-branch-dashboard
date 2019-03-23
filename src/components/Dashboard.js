@@ -17,11 +17,26 @@ class Dashboard extends Component {
     super(props)
     this.state = {
       data: new GithubData(props.token),
-      org: 'RoomstoGoDigital',
+      org: '',
+      orgs: [],
       topics: ['roomstogo'],
       user: props.user,
       repos: [],
       branches: ['master', 'staging', 'production']
+    }
+  }
+
+  componentWillMount () {
+    this._asyncRequest = this.state.data.getOrganizations()
+      .then(orgs => {
+        this.setState({ orgs: orgs, org: orgs[0] })
+        return this.refreshRepos()
+      })
+  }
+
+  componentWillUnmount () {
+    if (this._asyncRequest) {
+      this._asyncRequest.cancel()
     }
   }
 
@@ -43,6 +58,7 @@ class Dashboard extends Component {
   }
 
   onSelectOrg (org) {
+    this.state.data.resetRepos()
     this.setState({ org: org, repos: [] }, this.refreshRepos)
   }
 
@@ -67,16 +83,6 @@ class Dashboard extends Component {
       branches.splice(index, 1)
     }
     this.setState({ branches: branches, repos: [] }, this.refreshRepos)
-  }
-
-  componentWillMount () {
-    this._asyncRequest = this.refreshRepos()
-  }
-
-  componentWillUnmount () {
-    if (this._asyncRequest) {
-      this._asyncRequest.cancel()
-    }
   }
 
   renderRepo (r) {
@@ -112,7 +118,7 @@ class Dashboard extends Component {
           <Controls
             onSelectOrg={(org) => this.onSelectOrg(org)}
             org={this.state.org.toString()}
-            orgs={[this.state.org.toString()]}
+            orgs={this.state.orgs.slice()}
             branches={this.state.branches.slice()}
             topics={this.state.topics.slice()}
             onChangeBranches={(b, added) => { this.onChangeBranches(b, added) }}

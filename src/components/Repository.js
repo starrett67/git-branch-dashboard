@@ -37,7 +37,7 @@ class Repository extends Component {
       <MDBContainer fluid>
         <MDBRow>
           <MDBCol className='text-center mt-5'>
-            <a href={this.props.repo.html_url}><h1>{this.props.repo.name}</h1></a>
+            <h1><a href={this.props.repo.html_url}>{this.props.repo.name}</a></h1>
           </MDBCol>
         </MDBRow>
         <MDBRow className='mb-5'>

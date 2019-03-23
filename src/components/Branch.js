@@ -14,7 +14,7 @@ class Branch extends Component {
                   <MDBCardText>Commiter:</MDBCardText>
                 </MDBCol>
                 <MDBCol>
-                  <MDBCardText>{this.props.branch.commit.author.name}</MDBCardText>
+                  <MDBCardText>{this.props.branch.commit.commit.author.name}</MDBCardText>
                 </MDBCol>
               </MDBRow>
               <MDBRow>
@@ -22,7 +22,7 @@ class Branch extends Component {
                   <MDBCardText>Date:</MDBCardText>
                 </MDBCol>
                 <MDBCol>
-                  <MDBCardText>{this.props.branch.commit.author.date}</MDBCardText>
+                  <MDBCardText>{this.props.branch.commit.commit.author.date}</MDBCardText>
                 </MDBCol>
               </MDBRow>
               <MDBRow>
@@ -30,7 +30,7 @@ class Branch extends Component {
                   <MDBCardText>Message:</MDBCardText>
                 </MDBCol>
                 <MDBCol className='text-truncate'>
-                  <MDBCardText>{this.props.branch.commit.message}</MDBCardText>
+                  <MDBCardText>{this.props.branch.commit.commit.message}</MDBCardText>
                 </MDBCol>
               </MDBRow>
             </MDBCol>

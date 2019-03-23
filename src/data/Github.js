@@ -31,7 +31,6 @@ export default class GithubData {
     await this.getAllTopics()
     const filteredRepos = this.repos.filter(r => containsTopic(r, topics))
     await this.getReposBranches(filteredRepos, branches)
-    await this.getAllBranchesCommits(filteredRepos)
     console.log(`Total Calls: ${this.apiCalls}`)
     return filteredRepos
   }
@@ -97,30 +96,6 @@ export default class GithubData {
       this.apiCalls++
       repo.branches.push(resp.data)
     } catch (err) { }
-  }
-
-  getAllBranchesCommits (repos) {
-    const brachesCommits = repos.map(r => this.getAllCommits(r))
-    return Promise.all(brachesCommits)
-  }
-
-  getAllCommits (repo) {
-    const branchCommits = repo.branches.map(b => {
-      if (b && !b.commit.author) {
-        return this.getCommitData(repo, b)
-      }
-      return Promise.resolve(repo.commit)
-    })
-    return Promise.all(branchCommits)
-  }
-
-  async getCommitData (repo, branch) {
-    if (branch) {
-      console.log('Getting Commits!')
-      const response = await this.octokit.repos.getCommit({ repo: repo.name, owner: repo.owner.login, sha: branch.commit.sha })
-      this.apiCalls++
-      return Object.assign(branch.commit, response.data.commit)
-    }
   }
 
   async getPullRequest (repo, src, dest) {

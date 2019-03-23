@@ -10,7 +10,7 @@ class Github extends Component {
           provider='github'
           gatekeeper={process.env.GATEKEEPER_URL || 'https://o3kzmr9dud.execute-api.us-east-1.amazonaws.com/dev/gatekeeper'}
           appId={process.env.APP_ID || 'fe376802e84328ca5784'}
-          redirect={process.env.OAUTH_CALLBACK || 'http://localhost:3000/'}
+          redirect={process.env.OAUTH_CALLBACK || 'http://branch-dashboard.joshstarrett.com/'}
           scope={['repo']}
           onLoginSuccess={this.props.onSuccess}
           onLoginFailure={this.props.onFailure}

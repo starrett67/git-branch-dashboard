@@ -21,8 +21,8 @@
     "universal-cookie": "^3.0.7"
   },
   "scripts": {
-    "start": "npx npm-run-all --parallel react gatekeeper",
-    "start:prod": "npx npm-run-all --parallel prod gatekeeper",
+    "start": "npm run react",
+    "start:prod": "npm run prod",
     "prod": "npm run build && npx serve -l 3000 -s build",
     "react": "react-scripts start",
     "gatekeeper": "node gatekeeper/index.js",

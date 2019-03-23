@@ -6,6 +6,15 @@ const containsTopic = (repo, topics) => {
   return containsTopic
 }
 
+const sortBranches = (repo, branches) => {
+  const sortedArr = []
+  for (let branch of branches) {
+    const match = repo.branches.find(b => branch === b.name)
+    if (match) sortedArr.push(match)
+  }
+  repo.branches = sortedArr
+}
+
 export default class GithubData {
   constructor (token) {
     this.repos = []
@@ -31,6 +40,7 @@ export default class GithubData {
     await this.getAllTopics()
     const filteredRepos = this.repos.filter(r => containsTopic(r, topics))
     await this.getReposBranches(filteredRepos, branches)
+    filteredRepos.forEach(r => sortBranches(r, branches))
     console.log(`Total Calls: ${this.apiCalls}`)
     return filteredRepos
   }

@@ -112,7 +112,7 @@ export default class GithubData {
     const pr = await this.octokit.pulls.list({
       repo: repo.name,
       owner: repo.owner.login,
-      title: src.commit.message,
+      title: src.commit.commit.message,
       head: src.name,
       base: dest.name,
       state: 'open'
@@ -125,7 +125,7 @@ export default class GithubData {
       const pr = await this.octokit.pulls.create({
         repo: repo.name,
         owner: repo.owner.login,
-        title: src.commit.message,
+        title: src.commit.commit.message,
         head: src.name,
         base: dest.name
       })

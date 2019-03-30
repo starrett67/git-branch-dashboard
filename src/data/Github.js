@@ -15,6 +15,15 @@ const sortBranches = (repo, branches) => {
   repo.branches = sortedArr
 }
 
+const sortRepos = (repoA, repoB) => {
+  try {
+    const commitDateA = new Date(repoA.branches[0].commit.commit.author.date)
+    const commitDateB = new Date(repoB.branches[0].commit.commit.author.date)
+    if (commitDateA > commitDateB) return -1
+    else return 1
+  } catch (err) { return 0 }
+}
+
 export default class GithubData {
   constructor (token) {
     this.repos = []
@@ -41,7 +50,9 @@ export default class GithubData {
     const filteredRepos = this.repos.filter(r => containsTopic(r, topics))
     await this.getReposBranches(filteredRepos, branches)
     filteredRepos.forEach(r => sortBranches(r, branches))
+    filteredRepos.sort(sortRepos)
     console.log(`Total Calls: ${this.apiCalls}`)
+    console.log(filteredRepos)
     return filteredRepos
   }
 

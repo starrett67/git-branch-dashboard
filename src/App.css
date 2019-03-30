@@ -121,6 +121,25 @@ h4 {
   background-color: #4285f4 !important
 }
 
+.flex-row {
+  display: flex;
+  flex-flow: row wrap;
+  margin-right: -.625rem;
+  margin-left: -.625rem;
+	padding-top: .75rem;
+	padding-bottom: .75rem;
+  width: 100%;
+  min-width: 25rem;
+}
+
+
+.row {
+	margin-bottom: 1em;
+  justify-content: center;
+}
+
+
+
 /* Button reset */
 button {
   background: none;

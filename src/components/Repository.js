@@ -11,7 +11,7 @@ class Repository extends Component {
     if (branch) {
       const otherBranches = this.props.repo.branches.filter(b => b && b.name !== branch.name)
       return (
-        <MDBCol key={branch.name}>
+        <MDBCol size={Math.floor(12 / this.props.repo.branches.length)} className='flex-row' key={branch.name}>
           <Branch
             branch={branch}
             otherBranches={otherBranches}

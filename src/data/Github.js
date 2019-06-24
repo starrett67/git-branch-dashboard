@@ -65,7 +65,7 @@ export default class GithubData {
         const response = await this.octokit.repos.listForOrg({ org: org, per_page: 100, page: page })
         this.apiCalls++
         page++
-        repos = repos.data
+        repos = response.data
         response.data.forEach(r => {
           if (!r.archived) {
             this.repos.push(r)

@@ -59,13 +59,19 @@ export default class GithubData {
   async getRepos (org) {
     if (!this.repos.length > 0) {
       console.log('Getting Repos!')
-      const repos = await this.octokit.repos.listForOrg({ org: org, per_page: 1000 })
-      this.apiCalls++
-      repos.data.forEach(r => {
-        if (!r.archived) {
-          this.repos.push(r)
-        }
-      })
+      let page = 1
+      let repos = []
+      do {
+        const response = await this.octokit.repos.listForOrg({ org: org, per_page: 100, page: page })
+        this.apiCalls++
+        page++
+        repos = repos.data
+        response.data.forEach(r => {
+          if (!r.archived) {
+            this.repos.push(r)
+          }
+        })
+      } while (repos.length === 100)
     }
     return this.repos
   }

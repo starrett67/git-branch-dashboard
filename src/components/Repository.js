@@ -1,21 +1,25 @@
-import React, { Component } from 'react'
+import React, { useEffect, useState } from 'react'
 import Branch from './Branch'
 import { MDBRow, MDBCol, MDBContainer } from 'mdbreact'
 
-class Repository extends Component {
-  getRepoName (repo) {
-    return repo.full_name.replace(`${repo.owner.login}/`, '')
-  }
+const Repository = ({ onMerge, repository, branchFilters, gitHubService }) => {
+  const [branches, setBranches] = useState([])
 
-  renderBranch (branch) {
+  useEffect(() => {
+    const getBranches = async () => {
+      setBranches(await gitHubService.getRepoBranches(repository, branchFilters))
+    }
+    getBranches()
+  }, [repository, branchFilters])
+
+  const renderBranch = (branch) => {
     if (branch) {
-      const otherBranches = this.props.repo.branches.filter(b => b && b.name !== branch.name)
       return (
-        <MDBCol size={Math.floor(12 / this.props.repo.branches.length)} className='flex-row' key={branch.name}>
+        <MDBCol size={Math.floor(12 / totalBranches())} className='flex-row' key={branch.name}>
           <Branch
             branch={branch}
-            otherBranches={otherBranches}
-            onMerge={(src, dest) => this.createPullRequest(src, dest)}
+            mergableBranches={mergableBranches(branch)}
+            onMerge={(srcBranch, destBranch) => onMerge(repository, srcBranch, destBranch)}
           />
         </MDBCol>
       )
@@ -26,26 +30,33 @@ class Repository extends Component {
     }
   }
 
-  createPullRequest (srcBranch, destBranch) {
-    console.log(`Creating Pull Request: ${this.props.repo.name}`)
-    console.log(`${srcBranch.name}  =====> ${destBranch.name}`)
-    this.props.createPull(this.props.repo, srcBranch, destBranch)
+  const totalBranches = () => {
+    return branches.filter(branch => !!branch).length
   }
 
-  render () {
-    return (
-      <MDBContainer fluid>
-        <MDBRow>
-          <MDBCol className='text-center mt-5'>
-            <h1><a href={this.props.repo.html_url}>{this.props.repo.name}</a></h1>
-          </MDBCol>
-        </MDBRow>
-        <MDBRow className='mb-5'>
-          {this.props.repo.branches.map(b => this.renderBranch(b))}
-        </MDBRow>
-      </MDBContainer>
-    )
+  const loading = () => {
+    const loading = !branches || branches.length === 0
+    return loading
   }
+
+  const mergableBranches = (branch) => {
+    return branches.filter(repoBranch => repoBranch && repoBranch.name !== branch.name)
+  }
+
+  return (
+    <MDBContainer fluid>
+      <MDBRow>
+        <MDBCol className='text-center mt-5'>
+          <h1>
+            <a href={repository.html_url}>{repository.name}</a>
+          </h1>
+        </MDBCol>
+      </MDBRow>
+      <MDBRow className='mb-5'>
+        {!loading() && branches.map(branch => renderBranch(branch))}
+      </MDBRow>
+    </MDBContainer>
+  )
 }
 
 export default Repository

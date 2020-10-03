@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import React, { useEffect, useState } from 'react'
 import Github from './components/Github'
 import Dashboard from './components/Dashboard'
 import Header from './components/Header'
@@ -9,46 +9,39 @@ import './App.css'
 
 const cookies = new Cookies()
 
-class App extends Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      github: cookies.get('github') || null
-    }
-    console.log(this.state)
+const App = () => {
+  const [githubToken, setGithubToken] = useState(cookies.get('github') || null)
+
+  useEffect(() => {
+    cookies.set('github', githubToken)
+  }, [githubToken])
+
+  const onSuccess = (response) => {
+    setGithubToken(response)
   }
 
-  onSuccess (response) {
-    cookies.set('github', response, { path: '/' })
-    this.setState({ github: response })
+  const handleFailure = (err) => {
+    setGithubToken(null)
+    cookies.remove('github')
+    alert(`Failed to authorize github: ${err.message}`)
   }
 
-  onFailure (response) { console.log(response) }
-
-  renderLogin () {
-    if (this.state.github) {
-      return (<Dashboard token={this.state.github._token.accessToken} user={this.state.github._profile.name} />)
-    } else {
-      return (<Github onSuccess={(res) => this.onSuccess(res)} onFailure={(res) => this.onFailure(res)} />)
-    }
-  }
-
-  render () {
-    return (
-      <MDBContainer fluid>
-        <MDBRow>
-          <MDBCol>
-            <Header />
-          </MDBCol>
-        </MDBRow>
-        <MDBRow className='mt-1'>
-          <MDBCol className='text-center'>
-            {this.renderLogin()}
-          </MDBCol>
-        </MDBRow>
-      </MDBContainer>
-    )
-  }
+  return (
+    <MDBContainer fluid>
+      <MDBRow>
+        <MDBCol>
+          <Header />
+        </MDBCol>
+      </MDBRow>
+      <MDBRow className='mt-1'>
+        <MDBCol className='text-center'>
+          {githubToken &&
+            <Dashboard githubFailure={handleFailure} token={githubToken} />}
+          {!githubToken &&
+            <Github onSuccess={onSuccess} onFailure={handleFailure} />}
+        </MDBCol>
+      </MDBRow>
+    </MDBContainer>
+  )
 }
-
 export default App

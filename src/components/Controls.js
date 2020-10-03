@@ -1,44 +1,81 @@
-import React, { Component } from 'react'
+import React, { useState } from 'react'
 import ReactToken from 'react-token'
-import { MDBDropdown, MDBDropdownToggle, MDBDropdownMenu, MDBDropdownItem, MDBRow, MDBCol } from 'mdbreact'
+import {
+  MDBDropdown,
+  MDBDropdownToggle,
+  MDBDropdownMenu,
+  MDBDropdownItem,
+  MDBRow,
+  MDBCol
+} from 'mdbreact'
 
-class Controls extends Component {
-  render () {
-    return (
-      <MDBRow className='controls'>
-        <MDBCol size='3'>
-          <MDBDropdown label='Organization'>
-            <label>Org:</label>
-            <MDBDropdownToggle caret color='primary'>
-              {this.props.org}
-            </MDBDropdownToggle>
-            <MDBDropdownMenu basic>
-              {this.props.orgs.map(o => {
-                return (<MDBDropdownItem key={o.name} onClick={() => this.props.onSelectOrg(o)}>{o}</MDBDropdownItem>)
-              })}
-            </MDBDropdownMenu>
-          </MDBDropdown>
-        </MDBCol>
+const Controls = ({
+  selectedOrg,
+  orgList,
+  branchFilters,
+  topicFilters,
+  onSelectOrg,
+  onChangeBranches,
+  onChangeTopics,
+  onChangeKeyword
+}) => {
+  const [typeDelay, setTypeDelay] = useState()
 
-        <MDBCol>
-          <ReactToken
-            selected={this.props.topics}
-            placeholder='Filter Topics'
-            onAdd={(d) => { this.props.onChangeTopics(d, true) }}
-            onRemove={(d) => { this.props.onChangeTopics(d, false) }}
-            key='topics' />
-        </MDBCol>
-        <MDBCol>
-          <ReactToken
-            selected={this.props.branches}
-            placeholder='Filter Branches'
-            onAdd={(d) => { this.props.onChangeBranches(d, true) }}
-            onRemove={(d) => { this.props.onChangeBranches(d, false) }}
-            key='branches' />
-        </MDBCol>
-      </MDBRow>
-    )
+  const onType = (event) => {
+    typeDelay && clearTimeout(typeDelay)
+    const value = event.target.value
+    setTypeDelay(setTimeout(() => onChangeKeyword(value), 800))
   }
+
+  const handleKeyDown = (event) => {
+    const value = event.target.value
+    if (event.key === 'Enter') {
+      typeDelay && clearTimeout(typeDelay)
+      onChangeKeyword(value)
+    }
+  }
+
+  return (
+    <MDBRow className='controls'>
+      <MDBCol size='4'>
+        <MDBRow>
+          <MDBCol size='5'>
+            <MDBDropdown label='Organization'>
+              <MDBDropdownToggle caret color='primary'>
+                {selectedOrg}
+              </MDBDropdownToggle>
+              <MDBDropdownMenu basic>
+                {orgList.map(organization => (
+                  <MDBDropdownItem key={organization.name} onClick={() => onSelectOrg(organization)}>{organization}</MDBDropdownItem>
+                ))}
+              </MDBDropdownMenu>
+            </MDBDropdown>
+          </MDBCol>
+          <MDBCol>
+            <input className='search rt-container' placeholder='Search' onKeyPress={handleKeyDown} onChange={onType} />
+          </MDBCol>
+        </MDBRow>
+      </MDBCol>
+      <MDBCol size='4'>
+        <ReactToken
+          selected={topicFilters}
+          placeholder='Filter Topics'
+          onAdd={(d) => { onChangeTopics(d, true) }}
+          onRemove={(d) => { onChangeTopics(d, false) }}
+          key='topics'
+        />
+      </MDBCol>
+      <MDBCol>
+        <ReactToken
+          selected={branchFilters}
+          placeholder='Filter Branches'
+          onAdd={(d) => { onChangeBranches(d, true) }}
+          onRemove={(d) => { onChangeBranches(d, false) }}
+          key='branches'
+        />
+      </MDBCol>
+    </MDBRow>
+  )
 }
 
 export default Controls

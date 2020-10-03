@@ -1,10 +1,11 @@
-import React, { Component } from 'react'
-import GithubData from '../data/Github'
+import React, { useEffect, useState } from 'react'
+import GithubDataV2 from '../data/GithubV2'
 import Repository from './Repository'
 import Controls from './Controls'
 import { HashLoader } from 'react-spinners'
 import { css } from '@emotion/core'
 import { MDBJumbotron, MDBContainer, MDBRow, MDBCol } from 'mdbreact'
+import config from '../config'
 
 const spinnerOverride = css`
 display: block;
@@ -12,123 +13,98 @@ margin: 0 auto;
 border-color: red;
 `
 
-class Dashboard extends Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      data: new GithubData(props.token),
-      org: '',
-      orgs: [],
-      topics: ['roomstogo'],
-      user: props.user,
-      repos: [],
-      branches: ['master', 'staging', 'production']
+const DashBoard = ({ token, githubFailure }) => {
+  const [gitHubService, setGitHubService] = useState(new GithubDataV2(token, githubFailure))
+  const [selectedOrg, setSelectedOrg] = useState('')
+  const [orgList, setOrgList] = useState([])
+  const [topicFilters, setTopicFilters] = useState(config.defaultTopicFilters)
+  const [keywordFilter, setKeywordFilter] = useState('')
+  const [branchFilters, setBranchFilters] = useState(config.defaultBranchFilters)
+  const [repoList, setRepoList] = useState([])
+
+  // Initial Load
+  useEffect(() => {
+    const fetchAndSetOrgs = async () => {
+      const gitHubOrgs = await gitHubService.getOrganizations()
+      if (gitHubOrgs) {
+        setSelectedOrg(gitHubOrgs[0])
+        setOrgList(gitHubOrgs)
+      }
+    }
+    fetchAndSetOrgs()
+  }, [])
+
+  // Selected Org or Topic Change
+  useEffect(() => {
+    const fetchAndSetRepos = async () => {
+      const githubRepos = await gitHubService.getRepos({ org: selectedOrg, keyword: keywordFilter, topics: topicFilters })
+      setRepoList(githubRepos)
+    }
+    selectedOrg && fetchAndSetRepos()
+  }, [selectedOrg, topicFilters, branchFilters, keywordFilter])
+
+  // Github Token Change
+  useEffect(() => setGitHubService(new GithubDataV2(token, githubFailure)), [token])
+
+  const onMerge = async (repository, srcBranch, destBranch) => {
+    console.log(`Creating Pull Request: ${repository.name}`)
+    console.log(`${srcBranch.name}  =====> ${destBranch.name}`)
+    try {
+      const response = await gitHubService.createPullRequest(repository, srcBranch, destBranch)
+      window.open(response.html_url)
+    } catch (err) {
+      window.alert(`Failed to open pull request for ${repository.name}. Check that there are commit to merge.`)
     }
   }
 
-  componentWillMount () {
-    this._asyncRequest = this.state.data.getOrganizations()
-      .then(orgs => {
-        this.setState({ orgs: orgs, org: orgs[0] })
-        return this.refreshRepos()
-      })
+  const onChangeTopics = (newTopic, add) => {
+    add && setTopicFilters([...topicFilters, newTopic])
+    !add && setTopicFilters(topicFilters.filter(t => t !== newTopic))
   }
 
-  componentWillUnmount () {
-    if (this._asyncRequest) {
-      this._asyncRequest.cancel()
-    }
+  const onChangeBranches = (newBranch, add) => {
+    add && setBranchFilters([...branchFilters, newBranch])
+    !add && setBranchFilters(branchFilters.filter(b => b !== newBranch))
   }
 
-  refreshRepos () {
-    this.getRepos().then(r => this.setState({ repos: r }))
-  }
-
-  async getRepos () {
-    const { data, topics, org, branches } = this.state
-    console.log(`Getting Filtered Repos: ${topics}`)
-    const repos = await data.getFilteredRepos(org, topics, branches)
-    return repos
-  }
-
-  createPr (repo, src, dest) {
-    this.state.data.createPullRequest(repo, src, dest)
-      .then(data => window.open(data.html_url))
-      .catch(data => window.alert(`Failed to open pull request for ${repo.name}. Check that there are commit to merge.`))
-  }
-
-  onSelectOrg (org) {
-    this.state.data.resetRepos()
-    this.setState({ org: org, repos: [] }, this.refreshRepos)
-  }
-
-  onChangeTopics (topic, add) {
-    let topics = this.state.topics.slice()
-    if (add) {
-      topics.push(topic)
-    } else {
-      const index = topics.indexOf(topic)
-      topics.splice(index, 1)
-    }
-    console.log(`Topics Changed: ${topics}`)
-    this.setState({ topics: topics, repos: [] }, this.refreshRepos)
-  }
-
-  onChangeBranches (branch, add) {
-    let branches = this.state.branches.slice()
-    if (add) {
-      branches.push(branch)
-    } else {
-      const index = branches.indexOf(branch)
-      branches.splice(index, 1)
-    }
-    this.setState({ branches: branches, repos: [] }, this.refreshRepos)
-  }
-
-  renderRepo (r) {
-    return (
-      <Repository createPull={(r, s, d) => { this.createPr(r, s, d) }} key={r.name} repo={r} />
-    )
-  }
-
-  renderRow () {
-    if (this.state.repos.length > 1) {
-      return this.state.repos.map(r => this.renderRepo(r))
-    } else {
-      return (
-        <MDBJumbotron fluid>
-          <MDBContainer className='text-center'>
-            <HashLoader
-              sizeUnit={'px'}
-              size={180}
-              color={'#6e5494'}
-              css={spinnerOverride}
-              loading
-            />
-          </MDBContainer>
-        </MDBJumbotron>
-      )
-    }
-  }
-
-  render () {
-    return (
-      <MDBRow>
-        <MDBCol className='text-center'>
-          <Controls
-            onSelectOrg={(org) => this.onSelectOrg(org)}
-            org={this.state.org.toString()}
-            orgs={this.state.orgs.slice()}
-            branches={this.state.branches.slice()}
-            topics={this.state.topics.slice()}
-            onChangeBranches={(b, added) => { this.onChangeBranches(b, added) }}
-            onChangeTopics={(t, added) => { this.onChangeTopics(t, added) }}
+  return (
+    <MDBRow>
+      <MDBCol className='text-center'>
+        <Controls
+          onSelectOrg={setSelectedOrg}
+          selectedOrg={selectedOrg}
+          orgList={orgList}
+          branchFilters={branchFilters}
+          topicFilters={topicFilters}
+          onChangeBranches={onChangeBranches}
+          onChangeTopics={onChangeTopics}
+          onChangeKeyword={setKeywordFilter}
+        />
+        {repoList.length > 0 && repoList.map(repository => (
+          <Repository
+            onMerge={onMerge}
+            key={repository.name}
+            repository={repository}
+            branchFilters={branchFilters}
+            gitHubService={gitHubService}
           />
-          {this.renderRow()}
-        </MDBCol>
-      </MDBRow>
-    )
-  }
+        ))}
+        {(!repoList.length || repoList.length < 1) && (
+          <MDBJumbotron fluid>
+            <MDBContainer className='text-center'>
+              <HashLoader
+                sizeUnit='px'
+                size={180}
+                color='#6e5494'
+                css={spinnerOverride}
+                loading
+              />
+            </MDBContainer>
+          </MDBJumbotron>
+        )}
+      </MDBCol>
+    </MDBRow>
+  )
 }
 
-export default Dashboard
+export default DashBoard

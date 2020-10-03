@@ -1,25 +1,25 @@
-import React, { Component } from 'react'
+import React from 'react'
 import SocialButton from './SocialButton'
 import FontAwesome from 'react-fontawesome'
+import config from '../config'
 
-class Github extends Component {
-  render () {
-    return (
-      <div className='button-wrapper fadein-fast'>
-        <SocialButton
-          provider='github'
-          gatekeeper={process.env.GATEKEEPER_URL || 'https://o3kzmr9dud.execute-api.us-east-1.amazonaws.com/dev/gatekeeper'}
-          appId={process.env.APP_ID || 'fe376802e84328ca5784'}
-          redirect={process.env.OAUTH_CALLBACK || 'http://branch-dashboard.joshstarrett.com/'}
-          scope={['repo']}
-          onLoginSuccess={this.props.onSuccess}
-          onLoginFailure={this.props.onFailure}
-        >
-          <FontAwesome name='github' />
-        </SocialButton>
-      </div>
-    )
-  }
+const Github = ({ onSuccess, onFailure }) => {
+  return (
+    <div className='button-wrapper fadein-fast'>
+      <SocialButton
+        provider='github'
+        gatekeeper={config.gatekeeperURL}
+        appId={config.appId}
+        redirect={config.oauthCallback}
+        scope={['repo']}
+        className='github'
+        onLoginSuccess={onSuccess}
+        onLoginFailure={onFailure}
+      >
+        <FontAwesome name='github' />
+      </SocialButton>
+    </div>
+  )
 }
 
 export default Github

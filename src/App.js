@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import Github from './components/Github'
 import Dashboard from './components/Dashboard'
 import Header from './components/Header'
@@ -11,19 +11,15 @@ const cookies = new Cookies()
 
 const App = () => {
   const [githubToken, setGithubToken] = useState(cookies.get('github') || null)
-
-  useEffect(() => {
-    cookies.set('github', githubToken)
-  }, [githubToken])
-
   const onSuccess = (response) => {
+    cookies.set('github', response, { maxAge: 604800 })
     setGithubToken(response)
   }
 
   const handleFailure = (err) => {
     setGithubToken(null)
     cookies.remove('github')
-    alert(`Failed to authorize github: ${err.message}`)
+    alert(err)
   }
 
   return (

@@ -24,7 +24,7 @@ const Controls = ({
   const onType = (event) => {
     typeDelay && clearTimeout(typeDelay)
     const value = event.target.value
-    setTypeDelay(setTimeout(() => onChangeKeyword(value), 800))
+    setTypeDelay(setTimeout(() => onChangeKeyword(value), 500))
   }
 
   const handleKeyDown = (event) => {

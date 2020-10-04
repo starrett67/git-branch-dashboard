@@ -40,4 +40,5 @@ const App = () => {
     </MDBContainer>
   )
 }
+
 export default App

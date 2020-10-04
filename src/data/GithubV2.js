@@ -8,6 +8,15 @@ export default class GithubData {
     })
   }
 
+  async getUser () {
+    try {
+      const response = await this.octokit.users.getAuthenticated()
+      return response.data
+    } catch (err) {
+      this.failureCallback(err)
+    }
+  }
+
   async getOrganizations () {
     try {
       const orgs = await this.octokit.orgs.listForAuthenticatedUser()
@@ -18,7 +27,8 @@ export default class GithubData {
   }
 
   async getRepos ({ org, topics, perPage = 20, page = 0, keyword = '' }) {
-    let query = `${keyword}+org:${org}+archived:false`
+    let query = `${keyword}+archived:false`
+    if (org) query += `+org:${org}`
     if (topics && topics.length > 0) query += `+topic:${topics.join('+topic:')}`
     const params = {
       q: query,

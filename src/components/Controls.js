@@ -46,7 +46,7 @@ const Controls = ({
               </MDBDropdownToggle>
               <MDBDropdownMenu basic>
                 {orgList.map(organization => (
-                  <MDBDropdownItem key={organization.name} onClick={() => onSelectOrg(organization)}>{organization}</MDBDropdownItem>
+                  <MDBDropdownItem key={organization} onClick={() => onSelectOrg(organization)}>{organization}</MDBDropdownItem>
                 ))}
               </MDBDropdownMenu>
             </MDBDropdown>

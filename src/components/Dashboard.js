@@ -25,11 +25,14 @@ const DashBoard = ({ token, githubFailure }) => {
   // Initial Load
   useEffect(() => {
     const fetchAndSetOrgs = async () => {
-      const gitHubOrgs = await gitHubService.getOrganizations()
-      if (gitHubOrgs) {
+      const gitHubOrgs = await gitHubService.getOrganizations() || []
+      const user = await gitHubService.getUser() || {}
+      if (gitHubOrgs && gitHubOrgs.length > 0) {
         setSelectedOrg(gitHubOrgs[0])
-        setOrgList(gitHubOrgs)
+      } else if (user) {
+        setSelectedOrg(user.login)
       }
+      setOrgList([...gitHubOrgs, user.login])
     }
     fetchAndSetOrgs()
   }, [])
@@ -40,6 +43,7 @@ const DashBoard = ({ token, githubFailure }) => {
       const githubRepos = await gitHubService.getRepos({ org: selectedOrg, keyword: keywordFilter, topics: topicFilters })
       setRepoList(githubRepos)
     }
+    setRepoList([])
     selectedOrg && fetchAndSetRepos()
   }, [selectedOrg, topicFilters, branchFilters, keywordFilter])
 

@@ -23,6 +23,7 @@ const DashBoard = ({ token, githubFailure }) => {
   const [branchFilters, setBranchFilters] = useState(config.defaultBranchFilters)
   const [repoList, setRepoList] = useState([])
   const [repoBranches, setRepoBranches] = useState(new Map())
+  const [loading, setLoading] = useState(false)
 
   // Initial Load
   useEffect(() => {
@@ -42,29 +43,25 @@ const DashBoard = ({ token, githubFailure }) => {
   // Selected Org or Topic Change
   useEffect(() => {
     const fetchAndSetRepos = async () => {
+      setLoading(true)
       const githubRepos = await gitHubService.getRepos({ org: selectedOrg, keyword: keywordFilter, topics: topicFilters })
       setRepoList(githubRepos)
     }
     setRepoList([])
     setRepoBranches(new Map())
-    selectedOrg && fetchAndSetRepos()
+    selectedOrg && !loading && fetchAndSetRepos()
   }, [selectedOrg, topicFilters, branchFilters, keywordFilter])
 
+  // If branch filters change and sort branch is not available set to empty
   useEffect(() => {
-    console.log('counts', repoList.length, repoBranches.count)
-    if (repoList.length > 0 && repoBranches.size === repoList.length) {
-      console.log('sorting', selectedSortBy)
-      console.log('sorting count ', repoList.length)
-      let sortedRepoList = []
-      if (selectedSortBy) {
-        sortedRepoList = repoList.slice().sort((r1, r2) => sortByBranch(r1, r2, selectedSortBy))
-      } else {
-        sortedRepoList = repoList.slice().sort((r1, r2) => new Date(r2.updated_at) - new Date(r1.updated_at))
-      }
-      if (sortedRepoList !== repoList) {
-        setRepoList(sortedRepoList)
-      }
+    if (!branchFilters.includes(selectedSortBy)) {
+      setSelectedSortBy('')
     }
+  }, [branchFilters])
+
+  // Sort repolistories by an updated branch
+  useEffect(() => {
+    sortRepoList()
   }, [selectedSortBy, repoBranches])
 
   // Github Token Change
@@ -78,6 +75,21 @@ const DashBoard = ({ token, githubFailure }) => {
       window.open(response.html_url)
     } catch (err) {
       window.alert(`Failed to open pull request for ${repository.name}. Check that there are commit to merge.`)
+    }
+  }
+
+  const sortRepoList = () => {
+    console.log('sorting counts', repoList.length, repoBranches.size)
+    if (repoList.length > 0 && repoBranches.size === repoList.length) {
+      let sortedRepoList = []
+      if (selectedSortBy) {
+        sortedRepoList = repoList.slice().sort((r1, r2) => sortByBranch(r1, r2, selectedSortBy))
+      } else {
+        sortedRepoList = repoList.slice().sort((r1, r2) => new Date(r2.updated_at) - new Date(r1.updated_at))
+      }
+      if (sortedRepoList !== repoList) {
+        setRepoList(sortedRepoList)
+      }
     }
   }
 
@@ -105,7 +117,7 @@ const DashBoard = ({ token, githubFailure }) => {
     const branchObj = {}
     branches.forEach(branch => { branchObj[branch.name] = branch })
     repoBranches.set(branchName, branchObj)
-    setRepoBranches(repoBranches)
+    sortRepoList()
   }
 
   return (

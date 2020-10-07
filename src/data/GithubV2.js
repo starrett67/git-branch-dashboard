@@ -26,7 +26,7 @@ export default class GithubData {
     }
   }
 
-  async getRepos ({ org, topics, perPage = 20, page = 0, keyword = '' }) {
+  async getRepos ({ org, topics, perPage = 50, page = 0, keyword = '' }) {
     let query = `${keyword}+archived:false`
     if (org) query += `+org:${org}`
     if (topics && topics.length > 0) query += `+topic:${topics.join('+topic:')}`
@@ -39,7 +39,9 @@ export default class GithubData {
     }
     try {
       const response = await this.octokit.search.repos(params)
-      const repos = response.data.items.sort((r1, r2) => new Date(r2.updated_at) - new Date(r1.updated_at))
+      const repos = response.data.items
+        .sort((r1, r2) => new Date(r2.updated_at) - new Date(r1.updated_at))
+      console.log(repos)
       return repos
     } catch (err) {
       this.failureCallback(err)

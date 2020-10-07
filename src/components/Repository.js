@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react'
 import Branch from './Branch'
 import { MDBRow, MDBCol, MDBContainer } from 'mdbreact'
 
-const Repository = ({ onMerge, repository, branchFilters, gitHubService }) => {
+const Repository = ({ onMerge, repository, branchFilters, gitHubService, addRepoBranches }) => {
   const [branches, setBranches] = useState([])
 
   useEffect(() => {
     const getBranches = async () => {
+      const branches = await gitHubService.getRepoBranches(repository, branchFilters)
       setBranches(await gitHubService.getRepoBranches(repository, branchFilters))
+      addRepoBranches(repository.name, branches.filter(branch => !!branch))
     }
     getBranches()
   }, [repository, branchFilters])

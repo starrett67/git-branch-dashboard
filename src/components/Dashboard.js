@@ -16,11 +16,13 @@ border-color: red;
 const DashBoard = ({ token, githubFailure }) => {
   const [gitHubService, setGitHubService] = useState(new GithubDataV2(token, githubFailure))
   const [selectedOrg, setSelectedOrg] = useState('')
+  const [selectedSortBy, setSelectedSortBy] = useState('')
   const [orgList, setOrgList] = useState([])
   const [topicFilters, setTopicFilters] = useState(config.defaultTopicFilters)
   const [keywordFilter, setKeywordFilter] = useState('')
   const [branchFilters, setBranchFilters] = useState(config.defaultBranchFilters)
   const [repoList, setRepoList] = useState([])
+  const [repoBranches, setRepoBranches] = useState(new Map())
 
   // Initial Load
   useEffect(() => {
@@ -44,8 +46,26 @@ const DashBoard = ({ token, githubFailure }) => {
       setRepoList(githubRepos)
     }
     setRepoList([])
+    setRepoBranches(new Map())
     selectedOrg && fetchAndSetRepos()
   }, [selectedOrg, topicFilters, branchFilters, keywordFilter])
+
+  useEffect(() => {
+    console.log('counts', repoList.length, repoBranches.count)
+    if (repoList.length > 0 && repoBranches.size === repoList.length) {
+      console.log('sorting', selectedSortBy)
+      console.log('sorting count ', repoList.length)
+      let sortedRepoList = []
+      if (selectedSortBy) {
+        sortedRepoList = repoList.slice().sort((r1, r2) => sortByBranch(r1, r2, selectedSortBy))
+      } else {
+        sortedRepoList = repoList.slice().sort((r1, r2) => new Date(r2.updated_at) - new Date(r1.updated_at))
+      }
+      if (sortedRepoList !== repoList) {
+        setRepoList(sortedRepoList)
+      }
+    }
+  }, [selectedSortBy, repoBranches])
 
   // Github Token Change
   useEffect(() => setGitHubService(new GithubDataV2(token, githubFailure)), [token])
@@ -61,6 +81,16 @@ const DashBoard = ({ token, githubFailure }) => {
     }
   }
 
+  const sortByBranch = (repoa, repob, branch) => {
+    const repoABranches = repoBranches.get(repoa.name)
+    const repoBBranches = repoBranches.get(repob.name)
+    const repoAUpdated = repoABranches && repoABranches[branch] && repoABranches[branch].commit.commit.author.date
+    const repoBUpdated = repoBBranches && repoBBranches[branch] && repoBBranches[branch].commit.commit.author.date
+    if (!repoAUpdated) { return 0 }
+    if (!repoBUpdated) { return -1 }
+    return new Date(repoBUpdated) - new Date(repoAUpdated)
+  }
+
   const onChangeTopics = (newTopic, add) => {
     add && setTopicFilters([...topicFilters, newTopic])
     !add && setTopicFilters(topicFilters.filter(t => t !== newTopic))
@@ -71,18 +101,27 @@ const DashBoard = ({ token, githubFailure }) => {
     !add && setBranchFilters(branchFilters.filter(b => b !== newBranch))
   }
 
+  const addRepoBranches = (branchName, branches) => {
+    const branchObj = {}
+    branches.forEach(branch => { branchObj[branch.name] = branch })
+    repoBranches.set(branchName, branchObj)
+    setRepoBranches(repoBranches)
+  }
+
   return (
     <MDBRow>
       <MDBCol className='text-center'>
         <Controls
           onSelectOrg={setSelectedOrg}
           selectedOrg={selectedOrg}
+          selectedSortBy={selectedSortBy}
           orgList={orgList}
           branchFilters={branchFilters}
           topicFilters={topicFilters}
           onChangeBranches={onChangeBranches}
           onChangeTopics={onChangeTopics}
           onChangeKeyword={setKeywordFilter}
+          onSortChange={setSelectedSortBy}
         />
         {repoList.length > 0 && repoList.map(repository => (
           <Repository
@@ -91,6 +130,7 @@ const DashBoard = ({ token, githubFailure }) => {
             repository={repository}
             branchFilters={branchFilters}
             gitHubService={gitHubService}
+            addRepoBranches={addRepoBranches}
           />
         ))}
         {(!repoList.length || repoList.length < 1) && (

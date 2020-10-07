@@ -11,13 +11,15 @@ import {
 
 const Controls = ({
   selectedOrg,
+  selectedSortBy,
   orgList,
   branchFilters,
   topicFilters,
   onSelectOrg,
   onChangeBranches,
   onChangeTopics,
-  onChangeKeyword
+  onChangeKeyword,
+  onSortChange
 }) => {
   const [typeDelay, setTypeDelay] = useState()
 
@@ -56,7 +58,7 @@ const Controls = ({
           </MDBCol>
         </MDBRow>
       </MDBCol>
-      <MDBCol size='4'>
+      <MDBCol size='3'>
         <ReactToken
           selected={topicFilters}
           placeholder='Filter Topics'
@@ -73,6 +75,18 @@ const Controls = ({
           onRemove={(d) => { onChangeBranches(d, false) }}
           key='branches'
         />
+      </MDBCol>
+      <MDBCol size='2'>
+        <MDBDropdown label='Organization'>
+          <MDBDropdownToggle caret color='primary'>
+            Last Updated {selectedSortBy}
+          </MDBDropdownToggle>
+          <MDBDropdownMenu basic>
+            {['', ...branchFilters].map(sortBy => (
+              <MDBDropdownItem key={sortBy} onClick={() => onSortChange(sortBy)}>Last Updated {sortBy}</MDBDropdownItem>
+            ))}
+          </MDBDropdownMenu>
+        </MDBDropdown>
       </MDBCol>
     </MDBRow>
   )

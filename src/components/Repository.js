@@ -1,23 +1,13 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import Branch from './Branch'
 import { MDBRow, MDBCol, MDBContainer } from 'mdbreact'
 
-const Repository = ({ onMerge, repository, branchFilters, gitHubService, addRepoBranches }) => {
-  const [branches, setBranches] = useState([])
-
-  useEffect(() => {
-    const getBranches = async () => {
-      const branches = await gitHubService.getRepoBranches(repository, branchFilters)
-      setBranches(await gitHubService.getRepoBranches(repository, branchFilters))
-      addRepoBranches(repository.name, branches.filter(branch => !!branch))
-    }
-    getBranches()
-  }, [repository, branchFilters])
-
-  const renderBranch = (branch) => {
-    if (branch) {
+const Repository = ({ onMerge, repository, branchFilters }) => {
+  const renderBranch = (branchName) => {
+    const branch = repository[branchName]
+    if (repository[branchName]) {
       return (
-        <MDBCol size={Math.floor(12 / totalBranches())} className='flex-row' key={branch.name}>
+        <MDBCol size={`${Math.floor(12 / totalBranches())}`} className='flex-row' key={branch.name}>
           <Branch
             branch={branch}
             mergableBranches={mergableBranches(branch)}
@@ -27,22 +17,23 @@ const Repository = ({ onMerge, repository, branchFilters, gitHubService, addRepo
       )
     } else {
       return (
-        <MDBCol />
+        <MDBCol key={branchName} />
       )
     }
   }
 
   const totalBranches = () => {
-    return branches.filter(branch => !!branch).length
+    return branchFilters.filter(branch => !!repository[branch]).length
   }
 
-  const loading = () => {
-    const loading = !branches || branches.length === 0
-    return loading
-  }
-
-  const mergableBranches = (branch) => {
-    return branches.filter(repoBranch => repoBranch && repoBranch.name !== branch.name)
+  const mergableBranches = (targetBranch) => {
+    return branchFilters.map(branchName => {
+      let branch
+      if (repository[branchName] && repository[branchName].name !== targetBranch.name) {
+        branch = repository[branchName]
+      }
+      return branch
+    }).filter(branch => !!branch)
   }
 
   return (
@@ -50,12 +41,12 @@ const Repository = ({ onMerge, repository, branchFilters, gitHubService, addRepo
       <MDBRow>
         <MDBCol className='text-center mt-5'>
           <h1>
-            <a href={repository.html_url}>{repository.name}</a>
+            <a href={repository.url}>{repository.name}</a>
           </h1>
         </MDBCol>
       </MDBRow>
       <MDBRow className='mb-5'>
-        {!loading() && branches.map(branch => renderBranch(branch))}
+        {branchFilters.map(branch => renderBranch(branch))}
       </MDBRow>
     </MDBContainer>
   )

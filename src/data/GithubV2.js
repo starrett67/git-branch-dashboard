@@ -1,4 +1,4 @@
-import Octokit from '@octokit/rest'
+import { Octokit } from '@octokit/rest'
 
 export default class GithubData {
   constructor (token, failure) {
@@ -73,12 +73,12 @@ export default class GithubData {
     return pr.data[0]
   }
 
-  async createPullRequest (repo, src, dest) {
+  async createPullRequest (org, repo, src, dest) {
     try {
       const pr = await this.octokit.pulls.create({
         repo: repo.name,
-        owner: repo.owner.login,
-        title: src.commit.commit.message,
+        owner: org,
+        title: src.commit.message,
         head: src.name,
         base: dest.name
       })

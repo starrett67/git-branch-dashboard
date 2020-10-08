@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import GithubDataV2 from '../data/GithubV2'
+import GithubDataV4 from '../data/GithubV4'
 import Repository from './Repository'
 import Controls from './Controls'
 import { HashLoader } from 'react-spinners'
@@ -14,6 +15,7 @@ border-color: red;
 `
 
 const DashBoard = ({ token, githubFailure }) => {
+  const githubV4 = new GithubDataV4(token)
   const [gitHubService, setGitHubService] = useState(new GithubDataV2(token, githubFailure))
   const [selectedOrg, setSelectedOrg] = useState('')
   const [selectedSortBy, setSelectedSortBy] = useState('')
@@ -22,7 +24,7 @@ const DashBoard = ({ token, githubFailure }) => {
   const [keywordFilter, setKeywordFilter] = useState('')
   const [branchFilters, setBranchFilters] = useState(config.defaultBranchFilters)
   const [repoList, setRepoList] = useState([])
-  const [repoBranches, setRepoBranches] = useState(new Map())
+  const [totalRepoList, setTotalRepoList] = useState([])
   const [loading, setLoading] = useState(false)
 
   // Initial Load
@@ -44,13 +46,24 @@ const DashBoard = ({ token, githubFailure }) => {
   useEffect(() => {
     const fetchAndSetRepos = async () => {
       setLoading(true)
-      const githubRepos = await gitHubService.getRepos({ org: selectedOrg, keyword: keywordFilter, topics: topicFilters })
-      setRepoList(githubRepos)
+      let repos = await githubV4.getOrgRepos({ org: selectedOrg, keyword: keywordFilter, topics: topicFilters, branches: branchFilters })
+      setTotalRepoList(sortRepoList(repos.slice()))
+      setLoading(false)
+      repos = applyKeywordFilter(repos)
+      repos = applyTopicFilters(repos)
+      setRepoList(sortRepoList(first50(repos)))
     }
     setRepoList([])
-    setRepoBranches(new Map())
+    setTotalRepoList([])
     selectedOrg && !loading && fetchAndSetRepos()
-  }, [selectedOrg, topicFilters, branchFilters, keywordFilter])
+  }, [selectedOrg, branchFilters])
+
+  // Filter repo list by keyword and topics
+  useEffect(() => {
+    let repos = applyKeywordFilter(totalRepoList)
+    repos = applyTopicFilters(repos)
+    setRepoList(first50(repos))
+  }, [keywordFilter, topicFilters])
 
   // If branch filters change and sort branch is not available set to empty
   useEffect(() => {
@@ -61,43 +74,60 @@ const DashBoard = ({ token, githubFailure }) => {
 
   // Sort repolistories by an updated branch
   useEffect(() => {
-    sortRepoList()
-  }, [selectedSortBy, repoBranches])
+    setRepoList(sortRepoList(repoList))
+  }, [selectedSortBy])
 
   // Github Token Change
   useEffect(() => setGitHubService(new GithubDataV2(token, githubFailure)), [token])
+
+  const first50 = (list) => {
+    if (list.length > 50) {
+      list = list.slice(0, 50)
+    }
+    return list
+  }
+
+  const applyTopicFilters = (repos) => {
+    if (topicFilters.length > 0) {
+      repos = repos.filter(repo => {
+        const topics = repo.repositoryTopics.topics.map(topic => topic.topic.name)
+        const containsTopics = topicFilters.filter(topicName => topics.includes(topicName)).length === topicFilters.length
+        return containsTopics
+      })
+    }
+    return repos
+  }
+
+  const applyKeywordFilter = (repos) => {
+    return repos.filter(repo => repo.name.includes(keywordFilter))
+  }
 
   const onMerge = async (repository, srcBranch, destBranch) => {
     console.log(`Creating Pull Request: ${repository.name}`)
     console.log(`${srcBranch.name}  =====> ${destBranch.name}`)
     try {
-      const response = await gitHubService.createPullRequest(repository, srcBranch, destBranch)
+      const response = await gitHubService.createPullRequest(selectedOrg, repository, srcBranch, destBranch)
       window.open(response.html_url)
     } catch (err) {
       window.alert(`Failed to open pull request for ${repository.name}. Check that there are commit to merge.`)
     }
   }
 
-  const sortRepoList = () => {
-    console.log('sorting counts', repoList.length, repoBranches.size)
-    if (repoList.length > 0 && repoBranches.size === repoList.length) {
-      let sortedRepoList = []
+  const sortRepoList = (repos) => {
+    let sortedRepoList = []
+    if (repos.length > 0) {
       if (selectedSortBy) {
-        sortedRepoList = repoList.slice().sort((r1, r2) => sortByBranch(r1, r2, selectedSortBy))
+        sortedRepoList = repos.slice().sort((r1, r2) => sortByBranch(r1, r2, selectedSortBy))
       } else {
-        sortedRepoList = repoList.slice().sort((r1, r2) => new Date(r2.updated_at) - new Date(r1.updated_at))
-      }
-      if (sortedRepoList !== repoList) {
-        setRepoList(sortedRepoList)
+        sortedRepoList = repos.slice().sort((r1, r2) => new Date(r2.updatedAt) - new Date(r1.updatedAt))
       }
     }
+    return sortedRepoList
   }
 
   const sortByBranch = (repoa, repob, branch) => {
-    const repoABranches = repoBranches.get(repoa.name)
-    const repoBBranches = repoBranches.get(repob.name)
-    const repoAUpdated = repoABranches && repoABranches[branch] && repoABranches[branch].commit.commit.author.date
-    const repoBUpdated = repoBBranches && repoBBranches[branch] && repoBBranches[branch].commit.commit.author.date
+    const repoAUpdated = repoa && repoa[branch] && repoa[branch].commit.author.date
+    const repoBUpdated = repob && repob[branch] && repob[branch].commit.author.date
     if (!repoAUpdated) { return 0 }
     if (!repoBUpdated) { return -1 }
     return new Date(repoBUpdated) - new Date(repoAUpdated)
@@ -111,13 +141,6 @@ const DashBoard = ({ token, githubFailure }) => {
   const onChangeBranches = (newBranch, add) => {
     add && setBranchFilters([...branchFilters, newBranch])
     !add && setBranchFilters(branchFilters.filter(b => b !== newBranch))
-  }
-
-  const addRepoBranches = (branchName, branches) => {
-    const branchObj = {}
-    branches.forEach(branch => { branchObj[branch.name] = branch })
-    repoBranches.set(branchName, branchObj)
-    sortRepoList()
   }
 
   return (
@@ -141,11 +164,9 @@ const DashBoard = ({ token, githubFailure }) => {
             key={repository.name}
             repository={repository}
             branchFilters={branchFilters}
-            gitHubService={gitHubService}
-            addRepoBranches={addRepoBranches}
           />
         ))}
-        {(!repoList.length || repoList.length < 1) && (
+        {(loading) && (
           <MDBJumbotron fluid>
             <MDBContainer className='text-center'>
               <HashLoader

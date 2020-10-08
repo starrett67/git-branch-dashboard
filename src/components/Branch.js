@@ -21,7 +21,7 @@ const Branch = ({ branch, mergableBranches, onMerge }) => {
                 <MDBCardText>Commiter:</MDBCardText>
               </MDBCol>
               <MDBCol>
-                <MDBCardText>{branch.commit.commit.author.name}</MDBCardText>
+                <MDBCardText>{branch.commit.author.name}</MDBCardText>
               </MDBCol>
             </MDBRow>
             <MDBRow>
@@ -29,7 +29,7 @@ const Branch = ({ branch, mergableBranches, onMerge }) => {
                 <MDBCardText>Date:</MDBCardText>
               </MDBCol>
               <MDBCol>
-                <MDBCardText>{new Date(branch.commit.commit.author.date).toLocaleString()}</MDBCardText>
+                <MDBCardText>{new Date(branch.commit.author.date).toLocaleString()}</MDBCardText>
               </MDBCol>
             </MDBRow>
             <MDBRow>
@@ -37,7 +37,7 @@ const Branch = ({ branch, mergableBranches, onMerge }) => {
                 <MDBCardText>Message:</MDBCardText>
               </MDBCol>
               <MDBCol className='text-wrap'>
-                <MDBCardText>{branch.commit.commit.message}</MDBCardText>
+                <MDBCardText>{branch.commit.message}</MDBCardText>
               </MDBCol>
             </MDBRow>
           </MDBCol>
